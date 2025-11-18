@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support the Developer</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-dark': '#111827',
+                        'secondary-dark': '#1f2937',
+                        'accent-green': '#10b981',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-primary-dark text-gray-100 min-h-screen flex flex-col items-center p-4">
+
+    <!-- Main Content Card -->
+    <div class="w-full max-w-lg mt-8">
+        
+        <header class="mb-6">
+            <a href="index.html" class="inline-flex items-center text-accent-green hover:text-gray-300 transition-colors mb-4">
+                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Back to Tracker
+            </a>
+            <h1 class="text-4xl font-extrabold text-accent-green">Support the Project</h1>
+        </header>
+
+        <div class="bg-secondary-dark p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-700 space-y-6">
+            <p class="text-lg font-medium text-gray-300">
+                If this tool has helped you on your mindful journey, a small contribution is greatly appreciated!
+            </p>
+            
+            <h2 class="text-xl font-semibold text-gray-200">Zcash (ZEC) Wallet</h2>
+            
+            <!-- Wallet Address Block -->
+            <div class="bg-gray-800 p-4 rounded-xl break-all">
+                <p class="text-sm text-gray-400 mb-2">Send Zcash to the shielded address below:</p>
+                <code id="zcash-address" class="text-accent-green font-mono text-base select-all">
+                    u1u5ns2ejkgekns2qp393fe3pllaun5gvadvfd69ngqzzws0k8pvg5vvwv3k6uwlcgn6487y3dvdsf6cddv2rfv0lem39pn4qyqk6vlnrkrn848uzepka2njfr6kzwg7ef0m4vpf3tlpledwh08dvu62ejah0sm4lxl3w8lrxwcyw6m075
+                </code>
+                <button 
+                    onclick="copyAddress()" 
+                    class="mt-3 w-full py-2 bg-gray-700 text-gray-300 text-sm font-medium rounded-lg transition duration-150 ease-in-out hover:bg-gray-600"
+                >
+                    Copy Address
+                </button>
+                <div id="copy-message" class="mt-2 text-center text-xs text-accent-green hidden">Copied!</div>
+            </div>
+
+            <p class="text-sm text-gray-400">
+                Your support helps keep this minimalist tracker free, open-source, and distraction-free. Thank you!
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Function to copy the Zcash address to the clipboard
+        function copyAddress() {
+            const address = document.getElementById('zcash-address').textContent.trim();
+            const messageBox = document.getElementById('copy-message');
+
+            try {
+                // Use document.execCommand('copy') for compatibility in embedded environments
+                const tempInput = document.createElement('textarea');
+                tempInput.value = address;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+
+                messageBox.textContent = 'Address copied to clipboard!';
+                messageBox.classList.remove('hidden');
+                messageBox.classList.remove('text-red-500'); // Ensure error color is removed
+                messageBox.classList.add('text-accent-green');
+                setTimeout(() => messageBox.classList.add('hidden'), 2000);
+            } catch (err) {
+                messageBox.textContent = 'Failed to copy address.';
+                messageBox.classList.remove('hidden', 'text-accent-green');
+                messageBox.classList.add('text-red-500');
+                console.error('Copy failed:', err);
+                setTimeout(() => messageBox.classList.add('hidden'), 3000);
+            }
+        }
+    </script>
+
+</body>
+</html>
