@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why I Built This</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-dark': '#111827',
+                        'secondary-dark': '#1f2937',
+                        'accent-green': '#10b981',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-primary-dark text-gray-100 min-h-screen flex flex-col items-center p-4">
+
+    <!-- Main Content Card -->
+    <div class="w-full max-w-lg mt-8">
+        
+        <header class="mb-6">
+            <a href="index.html" class="inline-flex items-center text-accent-green hover:text-gray-300 transition-colors mb-4">
+                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Back to Tracker
+            </a>
+            <h1 class="text-4xl font-extrabold text-accent-green">The "Why"</h1>
+        </header>
+
+        <div class="bg-secondary-dark p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-700 space-y-4">
+            <p class="text-lg font-medium text-gray-300">
+                This tracker was inspired by a friend who was successfully building his habit of **micro meditation**.
+            </p>
+            <p class="text-gray-400">
+                He was simply keeping track of his daily minutes in an Excel sheet. He found that the act of **tracking it every day was what reminded him to actually do it**.
+            </p>
+            <p class="text-gray-400">
+                I wanted to adopt the same habit but couldn't find a proper, minimal, distraction-free tracker focused on this simple reminder loop—so I built this one.
+            </p>
+            <p class="text-xl font-bold text-accent-green">
+                The philosophy is simple: Track to Remember.
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>
