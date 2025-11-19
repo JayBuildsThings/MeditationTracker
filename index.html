@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Meditation Tracker (Local)</title>
+    
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Theme Color for PWA -->
+    <meta name="theme-color" content="#111827">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -106,18 +114,14 @@
             </button>
         </div>
         
-        <!-- START: New Dual Buttons (Side-by-Side Links) -->
+        <!-- Dual Buttons -->
         <div class="mt-4 flex space-x-4">
-            
-            <!-- "Why" Button -->
             <a 
                 href="why_story.html" 
                 class="w-1/2 py-2 text-center bg-gray-700 text-gray-300 font-medium rounded-xl transition duration-150 ease-in-out hover:bg-gray-600 shadow-md"
             >
                 Why
             </a>
-            
-            <!-- "Buy me a coffee" Button -->
             <a 
                 href="support.html" 
                 class="w-1/2 py-2 text-center bg-gray-700 text-gray-300 font-medium rounded-xl transition duration-150 ease-in-out hover:bg-gray-600 shadow-md"
@@ -125,7 +129,6 @@
                 Buy me a coffee
             </a>
         </div>
-        <!-- END: New Dual Buttons -->
 
     </div>
 
@@ -142,44 +145,125 @@
         </div>
     </div>
 
+    <!-- PWA Install Modal -->
+    <div id="install-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-[60] hidden">
+        <div class="bg-secondary-dark w-full max-w-xs rounded-2xl p-6 shadow-2xl border border-accent-green text-center">
+            <div class="mb-4 flex justify-center">
+                <div class="w-16 h-16 rounded-full bg-accent-green flex items-center justify-center shadow-lg shadow-accent-green/40">
+                    <svg class="w-8 h-8 text-primary-dark" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-xl font-bold text-gray-100 mb-2">Install App?</h3>
+            <p class="text-gray-400 text-sm mb-6">Install this tracker on your home screen for quick access and offline use.</p>
+            
+            <div class="flex flex-col space-y-3">
+                <button onclick="handleInstallYes()" class="w-full py-2 bg-accent-green text-primary-dark font-bold rounded-lg hover:bg-accent-green-hover transition-colors">
+                    Install Now
+                </button>
+                <button onclick="handleInstallNo()" class="w-full py-2 bg-transparent text-gray-400 font-medium hover:text-gray-200 transition-colors">
+                    No, thanks
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // --- GLOBAL CONSTANTS ---
+        // --- PWA & INSTALLATION LOGIC ---
+        
+        let deferredPrompt;
+        const INSTALL_DECLINED_KEY = 'pwa_install_declined_time';
+        const DAYS_TO_WAIT = 30;
+
+        // 1. Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+
+        // 2. Listen for 'beforeinstallprompt'
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later.
+            deferredPrompt = e;
+
+            // Check logic: Have they declined recently?
+            checkAndShowInstallModal();
+        });
+
+        function checkAndShowInstallModal() {
+            const lastDeclined = localStorage.getItem(INSTALL_DECLINED_KEY);
+            
+            if (lastDeclined) {
+                const declinedTime = parseInt(lastDeclined, 10);
+                const currentTime = Date.now();
+                const daysSince = (currentTime - declinedTime) / (1000 * 60 * 60 * 24);
+
+                // If declined less than 30 days ago, do not show prompt
+                if (daysSince < DAYS_TO_WAIT) {
+                    console.log(`Install prompt declined ${Math.floor(daysSince)} days ago. Waiting 30 days.`);
+                    return;
+                }
+            }
+
+            // If we made it here, show the custom modal
+            document.getElementById('install-modal').classList.remove('hidden');
+        }
+
+        async function handleInstallYes() {
+            // Hide our custom modal
+            document.getElementById('install-modal').classList.add('hidden');
+            
+            if (deferredPrompt) {
+                // Show the actual browser prompt
+                deferredPrompt.prompt();
+                // Wait for the user to respond to the prompt
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to install prompt: ${outcome}`);
+                // We no longer need the prompt. Clear it.
+                deferredPrompt = null;
+            }
+        }
+
+        function handleInstallNo() {
+            // Hide modal
+            document.getElementById('install-modal').classList.add('hidden');
+            
+            // Save current timestamp to local storage
+            localStorage.setItem(INSTALL_DECLINED_KEY, Date.now().toString());
+            console.log('User declined install. Setting 30 day cooldown.');
+        }
+
+
+        // --- EXISTING APP LOGIC (UNCHANGED) ---
         const STORAGE_KEY = 'meditation_daily_totals';
 
-        // --- UTILITY FUNCTIONS ---
-
-        /**
-         * Gets the date key for today (YYYY-MM-DD).
-         */
         function getTodayDateKey() {
             const now = new Date();
             return now.toISOString().split('T')[0];
         }
 
-        /**
-         * Converts a YYYY-MM-DD date key to a short day name (e.g., 'Mon', 'Today').
-         */
         function getDayName(dateKey) {
-            const date = new Date(dateKey + 'T00:00:00'); // Ensure date is treated as local midnight
+            const date = new Date(dateKey + 'T00:00:00');
             const todayKey = getTodayDateKey();
+            if (dateKey === todayKey) return 'Today';
             
-            if (dateKey === todayKey) {
-                return 'Today';
-            }
-            
-            // Check for yesterday
             const yesterday = new Date(new Date().getTime());
             yesterday.setDate(yesterday.getDate() - 1);
-            if (dateKey === yesterday.toISOString().split('T')[0].substring(0, 10)) {
-                return 'Yest';
-            }
+            if (dateKey === yesterday.toISOString().split('T')[0].substring(0, 10)) return 'Yest';
 
             return date.toLocaleDateString('en-US', { weekday: 'short' });
         }
 
-        /**
-         * Shows a temporary message to the user.
-         */
         function showMessage(text, className) {
             const box = document.getElementById('message-box');
             box.textContent = text;
@@ -188,12 +272,6 @@
             setTimeout(() => box.classList.add('hidden'), 3000);
         }
 
-        // --- LOCAL STORAGE FUNCTIONS ---
-
-        /**
-         * Loads the daily totals map from Local Storage.
-         * Returns an object mapping dateKey to total minutes: { 'YYYY-MM-DD': minutes }
-         */
         function loadDailyTotals() {
             try {
                 const data = localStorage.getItem(STORAGE_KEY);
@@ -204,9 +282,6 @@
             }
         }
 
-        /**
-         * Saves the daily totals map to Local Storage.
-         */
         function saveDailyTotals(totals) {
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(totals));
@@ -216,11 +291,6 @@
             }
         }
 
-        // --- CORE APPLICATION LOGIC ---
-
-        /**
-         * Function to add a new meditation log and update the UI.
-         */
         function logMeditation() {
             const inputElement = document.getElementById('minutes-input');
             const minutes = parseInt(inputElement.value, 10);
@@ -233,26 +303,16 @@
             const dateKey = getTodayDateKey();
             const dailyTotals = loadDailyTotals();
 
-            // 1. Update the total for today
             dailyTotals[dateKey] = (dailyTotals[dateKey] || 0) + minutes;
-            
-            // 2. Save the updated map
             saveDailyTotals(dailyTotals);
-
-            // 3. Update the UI
             processAndDisplayLogs(dailyTotals);
             
             showMessage(`Successfully logged ${minutes} minutes!`, 'bg-accent-green-hover');
-            inputElement.value = ''; // Clear input
+            inputElement.value = ''; 
         }
 
-        /**
-         * Updates the UI (Today's Total and Weekly Chart) based on the daily totals map.
-         */
         function processAndDisplayLogs(dailyTotals) {
             const todayKey = getTodayDateKey();
-            
-            // 1. Get the last 7 days' date keys
             const sevenDays = [];
             const now = new Date();
             for (let i = 6; i >= 0; i--) {
@@ -261,7 +321,6 @@
                 sevenDays.push(d.toISOString().split('T')[0].substring(0, 10));
             }
 
-            // 2. Update the Today's Total and Message
             const todayTotal = dailyTotals[todayKey] || 0;
             document.getElementById('daily-total').textContent = todayTotal;
             document.getElementById('current-date').textContent = `(${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`;
@@ -274,11 +333,9 @@
                 document.getElementById('today-message').textContent = "Excellent focus and consistency!";
             }
             
-            // 3. Render the Weekly Summary
             const summaryContainer = document.getElementById('weekly-summary');
-            summaryContainer.innerHTML = ''; // Clear previous content
+            summaryContainer.innerHTML = '';
 
-            // Find the max total for scaling the bar chart visually
             const allTotals = sevenDays.map(dateKey => dailyTotals[dateKey] || 0);
             const maxTotal = Math.max(...allTotals);
             
@@ -286,13 +343,11 @@
                 const total = dailyTotals[dateKey] || 0;
                 const dayName = getDayName(dateKey);
                 
-                // Calculate bar height percentage (min 5% if > 0 to be visible)
                 let heightPercent = 0;
                 if (total > 0 && maxTotal > 0) {
                     heightPercent = Math.max(5, (total / maxTotal) * 100);
                 }
                 
-                // Highlight today's bar
                 const isToday = dateKey === todayKey;
                 const barClasses = isToday 
                     ? 'bg-accent-green shadow-lg shadow-accent-green/50' 
@@ -320,26 +375,18 @@
             document.getElementById('loading-indicator').classList.add('hidden');
         }
 
-        // --- HISTORY MODAL FUNCTIONS ---
-
-        /**
-         * Populates and opens the history modal.
-         */
         function openHistoryModal() {
             const dailyTotals = loadDailyTotals();
             const historyListContainer = document.getElementById('history-list');
             historyListContainer.innerHTML = '';
 
-            // Convert object to array of {date: 'YYYY-MM-DD', minutes: N}
             let historyArray = Object.keys(dailyTotals)
                 .map(dateKey => ({
                     date: dateKey,
                     minutes: dailyTotals[dateKey]
                 }))
-                // Filter out entries with 0 minutes
                 .filter(entry => entry.minutes > 0);
 
-            // Sort by date descending (most recent first)
             historyArray.sort((a, b) => b.date.localeCompare(a.date));
 
             if (historyArray.length === 0) {
@@ -348,14 +395,11 @@
                 historyArray.forEach(entry => {
                     const listItem = document.createElement('div');
                     listItem.className = 'flex justify-between items-center bg-gray-700 p-3 rounded-lg border border-gray-600';
-                    
-                    // Format date for display
                     const displayDate = new Date(entry.date + 'T00:00:00').toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric'
                     });
-
                     listItem.innerHTML = `
                         <span class="text-gray-200 font-medium">${displayDate}</span>
                         <span class="text-accent-green font-bold">${entry.minutes} min</span>
@@ -367,17 +411,11 @@
             document.getElementById('history-modal').classList.remove('hidden');
         }
 
-        /**
-         * Closes the history modal.
-         */
         function closeHistoryModal() {
             document.getElementById('history-modal').classList.add('hidden');
         }
 
-
-        // --- INITIALIZATION ---
         window.onload = function() {
-            // Load existing data on startup
             const initialTotals = loadDailyTotals();
             processAndDisplayLogs(initialTotals);
         };
